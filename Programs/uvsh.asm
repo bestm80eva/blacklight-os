@@ -1,14 +1,87 @@
-;; Blacklight OS Shell
+;; Blacklight OS uvShell
 ;; (c) 2011 Troy Martin
 ; Blacklight OS is licensed under the Simplified BSD License (see license.txt)
 ; http://www.opensource.org/licenses/bsd-license.php
 
-%include "header.asm"
+; Small snippets of code borrowed from MikeOS-4.2 cli.asm.
+
+%include "header.asm"				; Blacklight OS API calls
+%include "../Kernel/defs.asm"			; Kernel defines - macros only!
+
+%define UVSHELL_VERSION "0.0.1"
 
 main:
-	dprint `Printing from 2000:0000\n\n`
+	dprint `uvShell `, UVSHELL_VERSION, ` compiled for `, KERNEL_NAME, ` `, KERNEL_VERSION_STRING, `\n\n`
 	
 command_loop:
+	
+	mov di, input_buffer			; Clear input buffer each time
+	mov al, 0
+	mov cx, 256
+	rep stosb
+
+	mov di, command_buffer			; And single command buffer
+	mov cx, 40
+	rep stosb
+	
+	call disk_get_bootdev			; Display the prompt
+	call direct_print_db
+	dprint `/>`
+	
+	call shell_get_input			; Get input from the user
+	dprint `\n`
+	
+	mov ax, input_buffer			; Take out any prefixed and trailing spaces
+	call string_chomp
+
+	mov si, input_buffer			; If just enter pressed, prompt again
+	cmp byte [si], 0
+	je command_loop
+
+	mov si, input_buffer			; Separate out the individual command
+	mov al, ' '
+	call string_tokenize
+
+	mov word [param_list], di		; Prepare parameters for passing a la MikeOS
+	
+	mov si, input_buffer			; Copy the command itself for later use.
+	mov di, command_buffer
+	mov cx, 31
+	rep movsb
+	
+	mov ax, command_buffer			; Lowercase the command buffer
+	call string_strlower
+	
+	mov si, command_buffer
+	
+	mov di, cmd_exit			; "exit"
+	call string_strcmp
+	jc do_exit
+	
+	mov di, cmd_ls				; "ls"
+	call string_strcmp
+	jc do_ls
+	
+	
+	mov ax, command_buffer			; Okay, it wasn't an internal command they wanted
+	call string_strupper			; Uppercase JUST the command
+	mov si, command_buffer
+	call string_strlen			; Return its length in AX
+
+search_for_extension:
+	mov si, command_buffer
+	call string_strlen
+	
+	mov si, command_buffer			; Start searching for an extension
+	add si, ax
+
+	sub si, 4
+
+	mov di, bin_extension			; Is there a .BIN extension?
+	call string_strcmp
+	jc found_file
+
+	jmp no_extension
 	
 found_file:
 	push es
@@ -41,11 +114,7 @@ execute_bin:
 	mov es, ax
 	mov fs, ax
 	
-	dprint `Printing from 2000:0000\n\nHalting.`
-	
-	cli
-	hlt
-
+	dprint `\n`
 	jmp command_loop			; When program has finished, start again
 
 
@@ -61,11 +130,6 @@ no_extension:
 	mov byte [si+2], 'I'
 	mov byte [si+3], 'N'
 	mov byte [si+4], 0
-
-	push si
-	mov si, command_buffer
-	call direct_print
-	pop si
 
 	jmp found_file
 
@@ -131,8 +195,11 @@ do_ls:
 	
 	mov al, [di]			; Move it right once more.
 	mov [di+1], al
-	mov byte [di], ' '		; And throw in a space to separate the filename and extension.
+	mov byte [di], ' '
 	
+	
+	push cs
+	pop ds
 	mov si, tmp_string		; And finally, display the formatted filename.
 	call direct_print
 	
@@ -141,10 +208,16 @@ do_ls:
 	
 	pop si				; Get the beginning of the entry again
 	push si				; And store it for safe-keeping.
+	mov ax, 1000h
+	mov ds, ax
 	
-	mov ax, [si+28]			; Get the file's size.
-	call direct_print_dec		; Convert it to a string and print it.
+	mov dx, [si+28]			; Get the file's size.
+	call direct_print_dec		; Print it.
+	push cs
+	pop ds
 	dprint `\n`
+	mov ax, 1000h
+	mov ds, ax
 	
 .skip:
 	pop si
@@ -296,7 +369,7 @@ cmd_ls		db "ls", 0
 bin_extension	db ".BIN", 0
 	
 input_buffer	times 256 db 0
-command_buffer	db "cpuid.bin",0
+command_buffer	times 48 db 0
 param_list	dw 0
 
 tmp_string	db 64				; Generic temporary string.
