@@ -6,8 +6,8 @@
 ; Kernel version data
 %define KERNEL_VERSION_MAJOR 0
 %define KERNEL_VERSION_MINOR 0
-%define KERNEL_VERSION_RELEASE 2
-%define KERNEL_VERSION_STRING "0.0.2"
+%define KERNEL_VERSION_RELEASE 3
+%define KERNEL_VERSION_STRING "0.0.3-svn"
 %define KERNEL_NAME "Blacklight OS"
 
 ; BIOS error codes
