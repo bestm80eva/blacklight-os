@@ -1,0 +1,18 @@
+Blacklight OS version summary
+(c) 2011 Troy Martin
+Blacklight OS is licensed under the Simplified BSD License (see license.txt)
+http://www.opensource.org/licenses/bsd-license.php
+
+
+- Version 0.0.2 (internal)
+  - Memory management still isn't finished. Kernel now searches for UVSH.BIN,
+    and if it finds it, loads it to 2000:0000 and executes it as a program. If
+    it can't find UVSH.BIN, it prompts the user to enter a filename to load as
+    a shell, and proceeds from there. FAT12 system calls have been added.
+
+- Version 0.0.1 (internal)
+  - Initial stable code. Ported MikeOS 4.3b7 FAT12 driver. Built system call
+    interface using far calls and segment-changing wrappers. As a test, an
+    unreleased MikeOS program I wrote called Extended CPUID was ported to
+    Blacklight OS with minimal effort, producing exactly the same results as
+    the MikeOS version after a wee bit of kernel tweaking.
