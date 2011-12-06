@@ -18,7 +18,3 @@
 %macro asciz 1+
     db %1,0
 %endmacro
-
-section .data
-    hex_char_table db "0123456789ABCDEF"
-section .text

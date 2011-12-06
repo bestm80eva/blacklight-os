@@ -249,6 +249,7 @@ vga_clear_screen:
     
 
 section .data
+	hex_char_table	db "0123456789ABCDEF"
 	vga_mode	db 03h
 	vga_columns	db 80
 	vga_rows	db 25
