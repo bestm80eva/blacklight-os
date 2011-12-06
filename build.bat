@@ -52,9 +52,9 @@ goto optionsloop
 :programs
 echo Building programs...
 cd Programs
-for %%i in (*.asm) do nasm -O0 -fbin %%i
-for %%i in (*.bin) do del %%i
-for %%i in (*.) do ren %%i %%i.bin
+for %%i in (*.asm) do nasm -O0 -fbin "%%i"
+for %%i in (*.bin) do del "%%i"
+for %%i in (*.) do ren "%%i" "%%i.bin"
 del header.bin
 cd ..
 echo Done!
