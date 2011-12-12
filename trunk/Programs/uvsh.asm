@@ -14,11 +14,6 @@ main:
 	dprint `uvShell `, UVSHELL_VERSION, ` compiled for `, KERNEL_NAME, ` `, KERNEL_VERSION_STRING, `\n\n`
 	
 command_loop:
-	;push cs
-	;pop ax
-	;mov ds, ax
-	;mov es, ax
-	;mov fs, ax
 	
 	mov di, input_buffer			; Clear input buffer each time
 	mov al, 0
@@ -66,10 +61,6 @@ command_loop:
 	mov di, cmd_ls				; "ls"
 	call string_strcmp
 	jc do_ls
-	
-	mov di, cmd_type			; "type"
-	call string_strcmp
-	jc do_type
 	
 	
 	mov ax, command_buffer			; Okay, it wasn't an internal command they wanted
@@ -153,33 +144,12 @@ total_fail:
 ; Internal commands
 
 do_exit:
-	dprint `\n`
+	dprint `\n\n`
 	retf
 	
-do_type:
-	mov si, [param_list]			; We need to find a file to load.
-	mov al, ' '
-	call string_tokenize
-	
-	mov ax, di				; Load it at CS:8000h
-	mov cx, 32768
-	call fat12_load_file
-	
-	mov di, bx				; Null-terminate it.
-	add di, 32768
-	mov al, 0
-	mov byte [di], al
-	
-	mov si, 32768				; Blaze through the file.
-	call direct_print
-	
-	dprint `\n\n`
-	jmp command_loop
-	
-	
 do_ls:
-	call fat12_read_root_dir		; Load the root directory into disk_buffer
-	jc .disk_error				; Carry is set on error - inform the user if there's a disk error
+	call fat12_read_root_dir	; Load the root directory into disk_buffer
+	jc .disk_error			; Carry is set on error - inform the user if there's a disk error
 
 	push ds
 	mov ax, 1000h
@@ -189,60 +159,60 @@ do_ls:
 .repeat:
 	push si
 	
-	mov al, [si+11]				; File attributes for entry
-	cmp al, 0Fh				; Windows marker, skip it
+	mov al, [si+11]			; File attributes for entry
+	cmp al, 0Fh			; Windows marker, skip it
 	je .skip
 
-	test al, 18h				; Is this a directory entry or volume label?
-	jnz .skip				; Yes, ignore it
+	test al, 18h			; Is this a directory entry or volume label?
+	jnz .skip			; Yes, ignore it
 
 	mov al, [si]
-	cmp al, 229				; If we read 229 = deleted filename
+	cmp al, 229			; If we read 229 = deleted filename
 	je .skip
 
-	cmp al, 0				; 1st byte = entry never used
+	cmp al, 0			; 1st byte = entry never used
 	je .done
 	
-	mov al, 0				; Make sure tmp_string is zeroed out sufficently
+	mov al, 0			; Make sure tmp_string is zeroed out sufficently
 	mov di, tmp_string
 	mov cx, 14
 	rep stosb
 	
-	mov di, tmp_string			; Now we need to copy the filename over
+	mov di, tmp_string		; Now we need to copy the filename over
 	mov cx, 11
 	rep movsb
 	
-	mov di, tmp_string			; Locate the last character in the extension
+	mov di, tmp_string		; Locate the last character in the extension
 	add di, 10
 	
-	mov al, [di]				; Move it right once.
+	mov al, [di]			; Move it right once.
 	mov [di+1], al
-	dec di					; Go back a step.
+	dec di				; Go back a step.
 	
-	mov al, [di]				; Do it again.
+	mov al, [di]			; Do it again.
 	mov [di+1], al
-	dec di					; Back again.
+	dec di				; Back again.
 	
-	mov al, [di]				; Move it right once more.
+	mov al, [di]			; Move it right once more.
 	mov [di+1], al
 	mov byte [di], ' '
 	
 	
 	push cs
 	pop ds
-	mov si, tmp_string			; And finally, display the formatted filename.
+	mov si, tmp_string		; And finally, display the formatted filename.
 	call direct_print
 	
-	mov si, .spaces				; Align everything up.
+	mov si, .spaces			; Align everything up.
 	call direct_print
 	
-	pop si					; Get the beginning of the entry again
-	push si					; And store it for safe-keeping.
+	pop si				; Get the beginning of the entry again
+	push si				; And store it for safe-keeping.
 	mov ax, 1000h
 	mov ds, ax
 	
-	mov dx, [si+28]				; Get the file's size.
-	call direct_print_dec			; Print it.
+	mov dx, [si+28]			; Get the file's size.
+	call direct_print_dec		; Print it.
 	push cs
 	pop ds
 	dprint `\n`
@@ -251,16 +221,16 @@ do_ls:
 	
 .skip:
 	pop si
-	add si, 32				; Skip to the next directory entry
+	add si, 32			; Skip to the next directory entry
 	jmp .repeat
 
 .disk_error:
-	mov si, .errmsg				; Uh oh, something went wrong with reading the disk!
-	call direct_print			; Tell the user.
-	jmp command_loop			; Bail out!
+	mov si, .errmsg			; Uh oh, something went wrong with reading the disk!
+	call direct_print		; Tell the user.
+	jmp command_loop		; Bail out!
 	
 .done:
-	pop si					; Unbreak the stack.
+	pop si				; Unbreak the stack.
 	pop ds					; Return registers.
 	dprint `\n`
 	jmp command_loop
@@ -278,29 +248,29 @@ shell_get_input:
 	push dx
 	push di
 
-	mov di, ax				; DI is where we'll store input (buffer)
-	xor cx, cx				; Character received counter for backspace
+	mov di, ax			; DI is where we'll store input (buffer)
+	xor cx, cx			; Character received counter for backspace
 
 
-.loop:						; Now onto string getting
+.loop:					; Now onto string getting
 	mov ah, 10h
 	int 16h
 
-	cmp al, 13				; If Enter key pressed, finish
+	cmp al, 13			; If Enter key pressed, finish
 	je .done
 
-	cmp al, 8				; Backspace pressed?
-	je .back				; If not, skip following checks
+	cmp al, 8			; Backspace pressed?
+	je .back			; If not, skip following checks
 	
-	cmp cx, bx				; Are we full?
+	cmp cx, bx			; Are we full?
 	je .loop
 
 	jmp .other
 
 
 .back:
-	cmp cx, 0				; Backspace at start of string?
-	je .loop				; Ignore it if so
+	cmp cx, 0			; Backspace at start of string?
+	je .loop			; Ignore it if so
 
 	mov ah, 3
 	push cx
@@ -310,19 +280,19 @@ shell_get_input:
 	je .back_lineup
 
 	pusha
-	mov ax, 0E08h				; If not, write space and move cursor back
+	mov ax, 0E08h			; If not, write space and move cursor back
 	mov bx, 0007h
-	int 10h					; Backspace twice, to clear space
+	int 10h				; Backspace twice, to clear space
 	mov al, ' '
 	int 10h
 	mov al, 8
 	int 10h
 	popa
 
-	dec di					; Character position will be overwritten by new
-						; character or terminator at end
+	dec di				; Character position will be overwritten by new
+					; character or terminator at end
 
-	dec cx					; Step back counter
+	dec cx				; Step back counter
 
 	jmp .loop
 
@@ -333,7 +303,7 @@ shell_get_input:
 	int 10h
 	pop cx
 	
-	dec dh					; Jump back to end of previous line
+	dec dh				; Jump back to end of previous line
 	mov dl, 79
 	mov ah, 2
 	push bx
@@ -342,7 +312,7 @@ shell_get_input:
 	pop bx
 	
 
-	mov al, ' '				; Print space there
+	mov al, ' '			; Print space there
 	mov ah, 0Eh
 	push bx
 	mov bx, 0007h
@@ -356,30 +326,30 @@ shell_get_input:
 	pop cx
 	
 	dec dh
-	mov dl, 79				; And jump back before the space
+	mov dl, 79			; And jump back before the space
 	mov ah, 2
 	push bx
 	mov bh, 0
 	int 10h
 	pop bx
 
-	dec di					; Step back position in string
-	dec cx					; Step back counter
+	dec di				; Step back position in string
+	dec cx				; Step back counter
 
 	jmp .loop
 
 
 .other:
 	pusha
-	mov ah, 0Eh				; Output entered, printable character
+	mov ah, 0Eh			; Output entered, printable character
 	mov bx, 0007h
 	int 10h
 	popa
 
-	stosb					; Store character in designated buffer
-	inc cx					; Characters processed += 1
+	stosb				; Store character in designated buffer
+	inc cx				; Characters processed += 1
 
-	jmp .loop				; Still room for more
+	jmp .loop			; Still room for more
 
 
 .done:
@@ -395,7 +365,6 @@ shell_get_input:
 	
 cmd_exit	db "exit", 0
 cmd_ls		db "ls", 0
-cmd_type	db "type", 0
 
 bin_extension	db ".BIN", 0
 	
@@ -403,4 +372,4 @@ input_buffer	times 256 db 0
 command_buffer	times 48 db 0
 param_list	dw 0
 
-tmp_string	times 64 db 0			; Generic temporary string.
+tmp_string	db 64				; Generic temporary string.
