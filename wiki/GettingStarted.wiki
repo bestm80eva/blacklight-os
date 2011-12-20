@@ -12,7 +12,7 @@ The floppy images and source tarballs are available on the [https://code.google.
 
 = Building Blacklight OS =
 
-If you have chosen the Subversion repository, you need to run `build.bat` in order to assemble the latest kernel. This process requires the latest version of [http://www.nasm.us/ NASM]. You can then update a floppy image with your new `uvlight.krn` file. Options for editing the floppy image include a fabulous shareware program called WinImage or the freeware ImDisk.
+If you have chosen the Subversion repository, you need to run `build.bat` in order to assemble the latest kernel. This process requires the latest version of [http://www.nasm.us/ NASM]. You can then update a floppy image with your new `uvlight.krn` file. Options for editing the floppy image include a fabulous shareware program called [http://www.winimage.com/ WinImage] or the freeware [http://www.ltr-data.se/opencode.html/#ImDisk ImDisk].
 
 = Running Blacklight OS =
 
