@@ -28,6 +28,7 @@
 	CPU 686
 %else
 	%warning "Unknown target, defaulting to 586 (Pentium)."
+	CPU 586
 %endif
 
 
