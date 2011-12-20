@@ -21,6 +21,7 @@ command_loop:
 	rep stosb
 
 	mov di, command_buffer			; And single command buffer
+	mov al, 0
 	mov cx, 40
 	rep stosb
 	
@@ -65,6 +66,14 @@ command_loop:
 	
 	mov ax, command_buffer			; Okay, it wasn't an internal command they wanted
 	call string_strupper			; Uppercase JUST the command
+	
+	mov si, input_buffer
+	call direct_print
+	dprint `\n`
+	mov si, command_buffer
+	call direct_print
+	dprint `\n`
+	
 	mov si, command_buffer
 	call string_strlen			; Return its length in AX
 
@@ -372,4 +381,4 @@ input_buffer	times 256 db 0
 command_buffer	times 48 db 0
 param_list	dw 0
 
-tmp_string	db 64				; Generic temporary string.
+tmp_string	times 64 db 0			; Generic temporary string.
