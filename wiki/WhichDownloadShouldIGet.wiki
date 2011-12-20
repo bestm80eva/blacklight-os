@@ -13,4 +13,4 @@ We also release tarballs of stable builds with preloaded floppy images (exactly 
 
 = Cutting-edge development: Subversion =
 
-Latest unstable builds are often uploaded to the SVN with new features and bugfixes for testing. Please note that these builds are most definitely not bug-free, and require a floppy disk image from either the latest stable end user zip or source tarball to be booted, as no floppy image is included in the Subversion repository for space concerns. Please visit the Source tab for more information on checking out the repository.
+Latest unstable builds are often uploaded to the SVN with new features and bugfixes for testing. Please note that these builds are most definitely not bug-free, and a floppy disk image is located the SVN repository in a gzipped file (`fat12.tar.gz`) to be modified and booted. Please visit the Source tab for more information on checking out the repository.
